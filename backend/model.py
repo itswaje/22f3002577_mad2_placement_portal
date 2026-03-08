@@ -1,16 +1,33 @@
 from extentions import db 
 from datetime import datetime,timezone
+from flask_security import UserMixin,RoleMixin
 class BaseModel(db.Model): #this contains all the repeating fields , it will not create columns its just for inheriting purpose 
     __abstract__= True #tells sqlalchemy not to create table for this 
     id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(db.DateTime(timezone=True),default = lambda:datetime.now(timezone.utc))#here lambda function is used because flask usually creates a data and stores it and retreive it when nullable but now i want it to calculate time everytime, when lambda is used it calls the funciton everytime w/o lambda the value just gest stored 
     updated_at=db.Column(db.DateTime(timezone=True),default = lambda:datetime.now(timezone.utc),onupdate = lambda:datetime.now(timezone.utc) )
 
-class User(BaseModel):
+class User(BaseModel,UserMixin):
     email = db.Column(db.String(120), unique=True,nullable = False)
+    name = db.Column(db.String(100))
     password = db.Column(db.String(200),nullable = False)
-    role = db.Column(db.Enum("admin", "student", "company"), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
+
+    #flask-security specific
+    fs_uniquifier = db.Column(db.String, unique = True, nullable = False)
+    active = db.Column(db.Boolean, default = True) #if Active False, then the user will not be able to login
+    roles = db. Relationship('Role', backref = 'bearers', secondary='user_roles')
+    requests= db.relationship('Request',back_populates='user')
+
+class Role(BaseModel, RoleMixin):
+    name = db.Column(db.String, unique=True, nullable=False)
+    description = db.Column(db.String, nullable=False)
+
+class UserRoles(BaseModel):
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
+
+
 
 class Request (BaseModel):
     #company requests placement drive and it will be shown to admin 
@@ -18,6 +35,7 @@ class Request (BaseModel):
     status = db.Column(db.Enum("pending","approved","rejected","blacklisted"),default="pending")
     #who created the request 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable = False)
+    user = db.relationship("User", back_populates="requests")
 
 class Student(BaseModel):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable = False)
