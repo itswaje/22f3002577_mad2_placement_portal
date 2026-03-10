@@ -1,6 +1,6 @@
 from flask import Flask 
 from config import LocalDevelopmentConfig
-from dotenv import load_dotenv #for bringing secret key from the env 
+from resources import auth_bp ,api,api_bp# for blueprint (if i didnt create init.py then i would have imported it as resources.auth_resource) 
 
 def create_app():
     
@@ -15,9 +15,16 @@ def create_app():
     from flask_security import SQLAlchemyUserDatastore
     from extentions import security 
     datastore = SQLAlchemyUserDatastore(db,User,Role)
-    security.init_app(app,datastore=datastore,)#register_blueprint=False
+    security.init_app(app,datastore=datastore,)
     app.datastore = datastore 
 
+
+    #bluerint 
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(api_bp)
+
+    #flask restful
+    #api.init_app(app)
 
 
 

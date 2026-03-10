@@ -11,6 +11,7 @@ with app.app_context():
     # get datastore from app
     datastore: SQLAlchemyUserDatastore = app.datastore
 
+
     # create roles
     admin_role = datastore.find_or_create_role( "admin",description="super user")
     student_role = datastore.find_or_create_role("student",description="placement portal student")

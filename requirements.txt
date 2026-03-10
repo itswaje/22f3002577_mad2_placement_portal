@@ -2,4 +2,7 @@ flask
 flask-sqlalchemy
 python-dotenv
 flask-security
+flask_restful
 argon2_cffi
+faker
+faker-food

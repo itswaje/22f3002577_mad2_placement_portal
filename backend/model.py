@@ -11,12 +11,11 @@ class User(BaseModel,UserMixin):
     email = db.Column(db.String(120), unique=True,nullable = False)
     name = db.Column(db.String(100))
     password = db.Column(db.String(200),nullable = False)
-    is_active = db.Column(db.Boolean, default=True)
 
     #flask-security specific
     fs_uniquifier = db.Column(db.String, unique = True, nullable = False)
     active = db.Column(db.Boolean, default = True) #if Active False, then the user will not be able to login
-    roles = db. Relationship('Role', backref = 'bearers', secondary='user_roles')
+    roles = db.relationship('Role', backref = 'bearers', secondary='user_roles')
     requests= db.relationship('Request',back_populates='user')
 
 class Role(BaseModel, RoleMixin):
@@ -70,7 +69,7 @@ class PlacementDrive(BaseModel):
     salary = db.Column(db.Integer)
     skills_required = db.Column(db.Text)
     application_deadline = db.Column(db.Date)
-    status = db.Column(db.Enum("pending","approved","closed""rejected"),default="pending")
+    status = db.Column(db.Enum("pending","approved","closed","rejected"),default="pending")
 
 class Application(BaseModel):
     student_id = db.Column(db.Integer, db.ForeignKey('student.id'),nullable = False)
