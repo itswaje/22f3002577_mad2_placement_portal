@@ -4,6 +4,7 @@ from flask_restful import Resource,marshal,fields,reqparse
 from services import DriveService,RequestService
 from flask_security import current_user
 from flask_security.decorators import roles_required, roles_accepted, auth_required
+from extensions import cache #generally for large get requests cache is implemented 
 
 
 def _get_company_for_user():
@@ -46,6 +47,7 @@ class DriveResource(Resource):
 
     # anyone logged in can view drives
     @auth_required("token")
+    @cache.memoize()
     def get(self, id):
 
         item = DriveService.get_by_id(id)

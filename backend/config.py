@@ -5,7 +5,6 @@ load_dotenv ()     #load environment variable from .env
 
 class BaseConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False #turning off background monitoring 
-
 class LocalDevelopmentConfig(BaseConfig): #localdevconfig inherits baseconfig and has extra too
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(
         os.path.dirname(os.path.abspath(__file__)),

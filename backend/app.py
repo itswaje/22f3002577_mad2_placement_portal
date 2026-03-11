@@ -67,7 +67,7 @@ def create_app():
     CORS(app, origins=["http://localhost:5173", "http://127.0.0.1:5173"] )
     #flask security things
     from flask_security import SQLAlchemyUserDatastore
-    from extentions import security 
+    from extentions import security ,Cache
     datastore = SQLAlchemyUserDatastore(db,User,Role)
     security.init_app(app,datastore=datastore,)
     app.datastore = datastore 
@@ -77,6 +77,9 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(api_bp)
 
+    # cache
+    cache.init_app(app)
+
     #flask restful
     # create database tables(trial)
     with app.app_context():
@@ -85,7 +88,13 @@ def create_app():
 
     return app
 
+from datetime import datetime 
 app = create_app()
+
+@app.route("/cache")
+def cache():
+    return datetime.uctnow()
+
 
 if (__name__=="__main__"):
     app.run(debug=True)
