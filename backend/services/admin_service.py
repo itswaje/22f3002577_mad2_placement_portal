@@ -43,8 +43,9 @@ class AdminService:
         if req.status == "approved":
             raise ServiceError("Request already approved")
 
-        # Create the actual PlacementDrive from the stored data
-        DriveService.create(req.data)
+        drive_data = dict(req.data)
+        drive_data["status"] = "approved"
+        DriveService.create(drive_data)
 
         req.status = "approved"
         db.session.commit()

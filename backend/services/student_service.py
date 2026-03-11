@@ -1,4 +1,4 @@
-from model import Student, db
+from model import Student, User, db
 from services.service_errors import ServiceError
 
 
@@ -50,3 +50,23 @@ class StudentService:
 
         db.session.delete(item)
         db.session.commit()
+
+    @staticmethod
+    def blacklist_student(student_id):
+        student = Student.query.get(student_id)
+
+        if not student:
+            raise ServiceError("Student not found")
+
+        if not student.is_active:
+            raise ServiceError("Student already blacklisted")
+
+        student.is_active = False
+
+        user = User.query.get(student.user_id)
+        if user:
+            user.active = False
+
+        db.session.commit()
+
+        return "Student blacklisted successfully"

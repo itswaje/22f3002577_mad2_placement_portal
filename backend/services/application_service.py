@@ -1,5 +1,6 @@
-from model import Application, db
+from model import Application, db, Student, PlacementDrive, Company
 from services.service_errors import ServiceError
+from datetime import date
 
 
 class ApplicationService:
@@ -18,7 +19,55 @@ class ApplicationService:
         return item
 
     @staticmethod
+    def check_eligibility(student_id, drive_id):
+        """
+        Check if a student is eligible to apply for a drive based on CGPA and branch constraints.
+        Returns: dict with 'eligible' (bool) and 'reasons' (list of reasons if not eligible)
+        """
+        student = Student.query.get(student_id)
+        drive = PlacementDrive.query.get(drive_id)
+        
+        if not student:
+            raise ServiceError("Student not found")
+        if not drive:
+            raise ServiceError("Drive not found")
+
+        reasons = []
+
+        if not student.is_active:
+            reasons.append("Student is blacklisted")
+
+        if drive.status != "approved":
+            reasons.append("Drive is not open for applications")
+
+        company = Company.query.get(drive.company_id)
+        if company and company.status == "blacklisted":
+            reasons.append("Company is blacklisted")
+        
+        # Check CGPA eligibility
+        if drive.min_cgpa and (student.cgpa is None or student.cgpa < drive.min_cgpa):
+            reasons.append(f"Your CGPA ({student.cgpa or 'Not set'}) is below the minimum required CGPA of {drive.min_cgpa}")
+        
+        # Check branch eligibility
+        if drive.eligibility_branch and drive.eligibility_branch.lower() != "all" and drive.eligibility_branch.lower() != "all branches":
+            if not student.branch or student.branch.lower() != drive.eligibility_branch.lower():
+                reasons.append(f"Your branch ({student.branch or 'Not set'}) does not match the required branch ({drive.eligibility_branch})")
+        
+        return {
+            "eligible": len(reasons) == 0,
+            "reasons": reasons
+        }
+
+    @staticmethod
     def create(data):
+        # Check eligibility before creating application
+        if "student_id" in data and "drive_id" in data:
+            eligibility = ApplicationService.check_eligibility(data["student_id"], data["drive_id"])
+            if not eligibility["eligible"]:
+                raise ServiceError("Not eligible: " + " | ".join(eligibility["reasons"]))
+        
+        if "applied_date" not in data or not data["applied_date"]:
+            data["applied_date"] = date.today()
         item = Application(**data)
 
         db.session.add(item)

@@ -74,6 +74,7 @@ class CompanyListResource(Resource):
         return marshal(items, company_fields), 200
 
     # POST /api/companies — company user registers their profile
+    @auth_required("token")
     @roles_required("company")
     def post(self):
         data = request.get_json()

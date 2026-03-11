@@ -28,19 +28,39 @@ def login ():
     if not user:
         return jsonify({"message":"user not found"}),404   
     if not user.active:
-        return jsonify({"message":"account awaiting admin approval"}),403
+        company = Company.query.filter_by(user_id=user.id).first()
+        if company:
+            if company.status == "rejected":
+                return jsonify({"message": "your registration has been rejected by the admin"}), 403
+            if company.status == "blacklisted":
+                return jsonify({"message": "your company has been blacklisted by the admin"}), 403
+
+        student = Student.query.filter_by(user_id=user.id).first()
+        if student and not student.is_active:
+            return jsonify({"message": "your account has been blacklisted by the admin"}), 403
+
+        return jsonify({"message": "account awaiting admin approval"}), 403
     
     #these are the things sent to the front end 
     if not verify_password(password,user.password):
         return jsonify({'message':'wrong password'}),400
-    
-        
+
+    role = user.roles[0].name if user.roles else None
+    profile_id = None
+    if role == 'student':
+        student = Student.query.filter_by(user_id=user.id).first()
+        profile_id = student.id if student else None
+    elif role == 'company':
+        company = Company.query.filter_by(user_id=user.id).first()
+        profile_id = company.id if company else None
+
     return jsonify({
             "id":user.id,
             "email":user.email,
             "name":user.name,
             "token":user.get_auth_token(),
-            "role": user.roles[0].name if user.roles else None
+            "role": role,
+            "profile_id": profile_id
         }),200
 
 @auth_bp.route("/register",methods=['POST'])

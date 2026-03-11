@@ -14,6 +14,7 @@ def _get_company_for_user():
 marshal_fields = {
     "id": fields.Integer,
     "company_id": fields.Integer,
+    "company_name": fields.String(attribute="company.company_name"),
     "drive_name": fields.String,
     "job_title": fields.String,
     "job_description": fields.String,
@@ -55,6 +56,7 @@ class DriveResource(Resource):
         return marshal(item, marshal_fields), 200
 
 
+    @auth_required("token")
     @roles_accepted("company", "admin")
     def put(self, id):
 
@@ -82,6 +84,7 @@ class DriveResource(Resource):
         return marshal(item, marshal_fields), 200
 
 
+    @auth_required("token")
     @roles_accepted("company", "admin")
     def patch(self, id):
 
@@ -113,6 +116,7 @@ class DriveResource(Resource):
         return marshal(item, marshal_fields), 200
 
 
+    @auth_required("token")
     @roles_accepted("company", "admin")
     def delete(self, id):
 
@@ -158,6 +162,7 @@ class DriveListResource(Resource):
 
 
     # only company can create drives
+    @auth_required("token")
     @roles_required("company")
     def post(self):
 
@@ -168,6 +173,9 @@ class DriveListResource(Resource):
             return {"message": "Company profile not found"}, 404
 
         args["company_id"] = company.id
+
+        if company.status == "blacklisted":
+            return {"message": "Blacklisted company cannot create drives"}, 403
 
         RequestService.create({
             "data": args,

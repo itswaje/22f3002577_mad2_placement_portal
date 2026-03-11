@@ -6,3 +6,4 @@ flask_restful
 argon2_cffi
 faker
 faker-food
+flask-cors

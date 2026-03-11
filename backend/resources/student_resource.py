@@ -7,11 +7,26 @@ from flask_security.decorators import roles_required, auth_required
 
 student_fields = {
     "id": fields.Integer,
+    "user_id": fields.Integer,
     "name": fields.String,
     "branch": fields.String,
     "year": fields.Integer,
-    "cgpa": fields.Float
+    "cgpa": fields.Float,
+    "skills": fields.String,
+    "is_active": fields.Boolean,
 }
+
+
+class StudentMeResource(Resource):
+
+    @auth_required("token")
+    @roles_required("student")
+    def get(self):
+        from model import Student
+        student = Student.query.filter_by(user_id=current_user.id).first()
+        if not student:
+            return {"message": "Student profile not found"}, 404
+        return marshal(student, student_fields), 200
 
 
 class StudentResource(Resource):
@@ -68,6 +83,7 @@ class StudentListResource(Resource):
         items = StudentService.get_all()
         return marshal(items, student_fields), 200
 
+    @auth_required("token")
     @roles_required("student")
     def post(self):
         data = request.get_json()

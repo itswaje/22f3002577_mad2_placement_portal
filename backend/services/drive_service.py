@@ -1,5 +1,5 @@
 # interacts with db
-from model import PlacementDrive, db
+from model import PlacementDrive, Company, db
 from services.service_errors import ServiceError
 from datetime import datetime
 
@@ -27,6 +27,14 @@ class DriveService:
                 data["application_deadline"], "%Y-%m-%d"
             ).date()
 
+        company_id = data.get("company_id")
+        if company_id:
+            company = Company.query.get(company_id)
+            if company and company.status == "approved":
+                data["status"] = "approved"
+            if company and company.status == "blacklisted":
+                data["status"] = "cancelled"
+
         item = PlacementDrive(**data)
 
         db.session.add(item)
@@ -51,6 +59,12 @@ class DriveService:
             data["application_deadline"] = datetime.strptime(
                 data["application_deadline"], "%Y-%m-%d"
             ).date()
+
+        company = Company.query.get(item.company_id)
+        if company and company.status == "blacklisted":
+            data["status"] = "cancelled"
+        elif company and company.status == "approved" and data.get("status") == "pending":
+            data["status"] = "approved"
 
         for key, value in data.items():
             if key != "id" and hasattr(item, key):

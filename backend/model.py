@@ -61,6 +61,7 @@ class Company(BaseModel):
 
 class PlacementDrive(BaseModel):
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'),nullable = False)
+    company = db.relationship('Company', backref='drives')
     drive_name = db.Column(db.String(150))
     job_title = db.Column(db.String(150))
     job_description = db.Column(db.Text)
@@ -69,16 +70,14 @@ class PlacementDrive(BaseModel):
     salary = db.Column(db.Integer)
     skills_required = db.Column(db.Text)
     application_deadline = db.Column(db.Date)
-    status = db.Column(db.Enum("pending","approved","closed","rejected"),default="pending")
+    status = db.Column(db.Enum("pending","approved","closed","rejected","cancelled"),default="pending")
 
 class Application(BaseModel):
     student_id = db.Column(db.Integer, db.ForeignKey('student.id'),nullable = False)
     drive_id = db.Column(db.Integer, db.ForeignKey('placement_drive.id'),nullable = False)
     status = db.Column(db.Enum("applied","shortlisted","waiting","selected","rejected"),default="applied")
     applied_date = db.Column(db.Date)
-    interview_type = db.Column(db.String(50))
-    remarks = db.Column(db.Text)
-    __table_args__ = (db.UniqueConstraint('student_id', 'drive_id'),)#enforces rule that student cannot apply to the same placement drive more than once
+__table_args__ = (db.UniqueConstraint('student_id', 'drive_id'),)#enforces rule that student cannot apply to the same placement drive more than once
 
 
 class Placement(BaseModel):
