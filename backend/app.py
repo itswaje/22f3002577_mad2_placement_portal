@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask
 from config import LocalDevelopmentConfig
 from resources import auth_bp ,api,api_bp# for blueprint (if i didnt create init.py then i would have imported it as resources.auth_resource)
 from flask_cors import CORS
@@ -9,7 +9,6 @@ from celery.schedules import crontab
 from extentions import cache
 from celery_factory import celery_init_app
 from celery.schedules  import crontab
-from mail import send_email
 
 def ensure_default_data(app, db, datastore, User):
     from flask_security import hash_password
@@ -107,46 +106,6 @@ def create_app():
 
 
 app, celery_app = create_app()
-
-
-@app.route("/mailhog-test", methods=["GET"])
-def mailhog_test():
-    to_email = request.args.get("to", app.config.get("ADMIN_EMAIL", "admin@placement.local"))
-    subject = "Placement Portal MailHog Test"
-    body = "<p>MailHog test successful from Placement Portal backend.</p>"
-
-    try:
-        send_email(to_email, subject, body)
-        return {"message": f"Test email sent to {to_email}"}, 200
-    except Exception as e:
-        app.logger.error(f"MailHog test failed: {e}")
-        return {"message": "MailHog test failed", "error": str(e)}, 500
-
-
-# ---- Instant trigger routes (for testing backend jobs without waiting for crontab) ----
-
-@app.route("/trigger/daily-reminders", methods=["GET"])
-def trigger_daily_reminders():
-    """Trigger the daily reminder job immediately."""
-    from tasks.mail_tasks import send_daily_reminders
-    task = send_daily_reminders.delay()
-    return {"message": "Daily reminders task queued", "task_id": task.id}, 200
-
-
-@app.route("/trigger/monthly-report", methods=["GET"])
-def trigger_monthly_report():
-    """Trigger the monthly activity report job immediately."""
-    from tasks.mail_tasks import send_monthly_report
-    task = send_monthly_report.delay()
-    return {"message": "Monthly report task queued", "task_id": task.id}, 200
-
-
-@app.route("/trigger/export-csv/<int:student_id>", methods=["GET"])
-def trigger_export_csv(student_id):
-    """Trigger CSV export for a student immediately."""
-    from tasks.export_tasks import export_applications_csv
-    task = export_applications_csv.delay(student_id)
-    return {"message": f"CSV export task queued for student {student_id}", "task_id": task.id}, 200
 
 
 from tasks.mail_tasks import send_daily_reminders, send_monthly_report
