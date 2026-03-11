@@ -59,13 +59,6 @@ export default {
         (this.userStore.user.name || this.userStore.user.email);
 
       return name ? String(name).charAt(0).toUpperCase() : "U";
-    },
-
-    profileRoute() {
-      if (this.isAdmin) return "/admin/dashboard";
-      if (this.isCompany) return "/company/dashboard";
-      if (this.isStudent) return "/student/dashboard";
-      return "/homepage";
     }
 
   },
@@ -199,14 +192,6 @@ export default {
               </a>
 
               <ul class="dropdown-menu dropdown-menu-end" :class="{ show: dropdownOpen }">
-
-                <li>
-                  <router-link class="dropdown-item" :to="profileRoute">
-                    Profile
-                  </router-link>
-                </li>
-
-                <li><hr class="dropdown-divider"></li>
 
                 <li>
                   <button

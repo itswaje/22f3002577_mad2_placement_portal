@@ -50,7 +50,8 @@ class ApplicationService:
         
         # Check branch eligibility
         if drive.eligibility_branch and drive.eligibility_branch.lower() != "all" and drive.eligibility_branch.lower() != "all branches":
-            if not student.branch or student.branch.lower() != drive.eligibility_branch.lower():
+            allowed_branches = [b.strip().lower() for b in drive.eligibility_branch.split(",")]
+            if not student.branch or student.branch.strip().lower() not in allowed_branches:
                 reasons.append(f"Your branch ({student.branch or 'Not set'}) does not match the required branch ({drive.eligibility_branch})")
         
         return {
