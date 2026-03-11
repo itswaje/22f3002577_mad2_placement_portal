@@ -281,6 +281,7 @@
 
 <script>
 import api from "@/utils/api";
+import { lifecycleStatusBadgeClass, studentActiveBadgeClass, applicationStatusBadgeClass } from "@/utils/ui";
 
 export default {
   name: "AdminDashboard",
@@ -395,16 +396,10 @@ export default {
   methods: {
     statusBadge(status) {
       const normalizedStatus = String(status ?? "").toLowerCase();
-      return {
-        badge: true,
-        "bg-warning text-dark": ["pending", "waiting"].includes(normalizedStatus),
-        "bg-success": ["approved", "selected"].includes(normalizedStatus),
-        "bg-info text-dark": normalizedStatus === "shortlisted",
-        "bg-primary": normalizedStatus === "applied",
-        "bg-danger": normalizedStatus === "rejected",
-        "bg-dark": ["blacklisted", "closed"].includes(normalizedStatus),
-        "bg-secondary": normalizedStatus === "cancelled" || !normalizedStatus,
-      };
+      if (["applied", "shortlisted", "selected", "waiting", "rejected", "cancelled"].includes(normalizedStatus)) {
+        return ["badge", applicationStatusBadgeClass(normalizedStatus)];
+      }
+      return lifecycleStatusBadgeClass(normalizedStatus);
     },
     resolveApplicationStatus(application) {
       if (this.driveMap[application?.drive_id]?.status === "cancelled") {
@@ -413,11 +408,7 @@ export default {
       return application?.status || "applied";
     },
     studentStatusBadge(student) {
-      return {
-        badge: true,
-        "bg-success": student.is_active,
-        "bg-dark": !student.is_active,
-      };
+      return studentActiveBadgeClass(student);
     },
     companyName(id) {
       return this.companyMap[id] ?? `Company #${id}`;

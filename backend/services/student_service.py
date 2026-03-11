@@ -3,6 +3,14 @@ from services.service_errors import ServiceError
 
 
 class StudentService:
+    ALLOWED_UPDATE_FIELDS = {
+        "name",
+        "branch",
+        "year",
+        "cgpa",
+        "skills",
+        "resume_path",
+    }
 
     @staticmethod
     def get_all():
@@ -34,7 +42,7 @@ class StudentService:
             raise ServiceError("Student not found")
 
         for key, value in data.items():
-            if hasattr(item, key):
+            if key in StudentService.ALLOWED_UPDATE_FIELDS and hasattr(item, key):
                 setattr(item, key, value)
 
         db.session.commit()

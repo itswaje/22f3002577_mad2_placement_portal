@@ -103,6 +103,7 @@
 
 <script>
 import api from "@/utils/api";
+import { lifecycleStatusBadgeClass } from "@/utils/ui";
 
 export default {
   name: "AdminDrives",
@@ -161,12 +162,7 @@ export default {
       return this.companyMap[id] ?? `Company #${id}`;
     },
     statusBadgeClass(status) {
-      return {
-        badge: true,
-        "bg-warning text-dark": status === "pending",
-        "bg-success": status === "approved",
-        "bg-danger": status === "rejected",
-      };
+      return lifecycleStatusBadgeClass(status);
     },
     async approve(req) {
       req._loading = true;

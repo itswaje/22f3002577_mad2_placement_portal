@@ -38,9 +38,9 @@
         <tbody>
           <tr v-for="(app, i) in applications" :key="app.id">
             <td>{{ i + 1 }}</td>
-            <td>{{ studentName(app.student_id) }}</td>
-            <td>{{ studentField(app.student_id, 'branch') }}</td>
-            <td>{{ studentField(app.student_id, 'cgpa') }}</td>
+            <td>{{ app.student?.name || `Student #${app.student_id}` }}</td>
+            <td>{{ app.student?.branch || "—" }}</td>
+            <td>{{ app.student?.cgpa || "—" }}</td>
             <td>
               <span :class="statusBadge(app.status)">{{ app.status }}</span>
             </td>
@@ -74,6 +74,7 @@
 
 <script>
 import api from "@/utils/api";
+import { applicationStatusBadgeClass } from "@/utils/ui";
 
 export default {
   name: "CompanyApplications",
@@ -81,7 +82,6 @@ export default {
     return {
       drive: {},
       applications: [],
-      studentMap: {},   // student_id -> student object
       loading: false,
       error: null,
     };
@@ -96,16 +96,9 @@ export default {
     try {
       const [drive, applications] = await Promise.all([
         api.get(`/drives/${driveId}`),
-        api.get(`/drives/${driveId}/applications`),
+        api.get(`/drives/${driveId}/applications/details`),
       ]);
       this.drive = drive;
-
-      // fetch all student details in parallel
-      const studentIds = [...new Set(applications.map((a) => a.student_id))];
-      const students = await Promise.all(studentIds.map((id) => api.get(`/students/${id}`)));
-      students.forEach((s) => {
-        this.studentMap[s.id] = s;
-      });
 
       // attach editable status field to each application
       this.applications = applications.map((a) => ({ ...a, _newStatus: a.status, _loading: false }));
@@ -116,21 +109,8 @@ export default {
     }
   },
   methods: {
-    studentName(id) {
-      return this.studentMap[id]?.name ?? `Student #${id}`;
-    },
-    studentField(id, field) {
-      return this.studentMap[id]?.[field] ?? "—";
-    },
     statusBadge(status) {
-      return {
-        badge: true,
-        "bg-secondary": status === "applied",
-        "bg-info text-dark": status === "shortlisted",
-        "bg-warning text-dark": status === "waiting",
-        "bg-success": status === "selected",
-        "bg-danger": status === "rejected",
-      };
+      return ["badge", applicationStatusBadgeClass(status)];
     },
     async updateStatus(app) {
       if (app._newStatus === app.status) return;

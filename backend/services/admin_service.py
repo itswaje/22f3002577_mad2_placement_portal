@@ -43,14 +43,27 @@ class AdminService:
         if req.status == "approved":
             raise ServiceError("Request already approved")
 
-        drive_data = dict(req.data)
-        drive_data["status"] = "approved"
-        DriveService.create(drive_data)
+        drive_data = dict(req.data or {})
+
+        if "id" in drive_data and len(drive_data) == 1:
+            # Delete request payload: {"id": <drive_id>}
+            DriveService.delete(drive_data["id"])
+            result_message = "Drive deleted successfully"
+        elif "id" in drive_data:
+            # Update request payload: {"id": <drive_id>, ...fields}
+            drive_data["status"] = "approved"
+            DriveService.update(drive_data)
+            result_message = "Drive updated successfully"
+        else:
+            # Create request payload: {...fields}
+            drive_data["status"] = "approved"
+            DriveService.create(drive_data)
+            result_message = "Drive approved successfully"
 
         req.status = "approved"
         db.session.commit()
 
-        return "Drive approved successfully"
+        return result_message
     
     @staticmethod
     def reject_drive(request_id):

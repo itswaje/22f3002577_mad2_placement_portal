@@ -1,5 +1,3 @@
-"/login"
-"/register"
 import uuid
 from flask import Blueprint,jsonify,request
 from flask_security import verify_password,hash_password
@@ -15,10 +13,10 @@ auth_bp = Blueprint("auth",__name__,url_prefix="/api/auth")
 
 @auth_bp.route("/login",methods = ['POST'])
 def login ():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
-    email = data ["email"]
-    password = data["password"]
+    email = (data.get("email") or "").strip()
+    password = data.get("password")
 
     if (not email or not password):
         return jsonify({"message":"invalid input"}),400
@@ -65,11 +63,11 @@ def login ():
 
 @auth_bp.route("/register",methods=['POST'])
 def register():
-    data = request.get_json()
-    name = data['name']
-    email= data['email']
-    password = data['password']
-    role = data['role']
+    data = request.get_json(silent=True) or {}
+    name = (data.get('name') or "").strip()
+    email = (data.get('email') or "").strip()
+    password = data.get('password')
+    role = data.get('role')
 
     # company profile fields
     company_name = data.get("company_name")
@@ -133,7 +131,8 @@ def register():
 
     try:
         db.session.commit()
-    except:
+    except Exception:
+        db.session.rollback()
         return {"message":"error assigning role"},400
     return jsonify({"id":user.id,
             "email":user.email,

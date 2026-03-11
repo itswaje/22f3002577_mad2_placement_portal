@@ -284,6 +284,7 @@
 <script>
 import api from "@/utils/api";
 import { useUserStore } from "@/stores/user";
+import { applicationStatusBadgeClass } from "@/utils/ui";
 
 export default {
   name: "StudentDashboard",
@@ -346,25 +347,7 @@ export default {
       const profile = await api.get("/students/me");
       this.profile = profile;
 
-      const applications = await api.get(`/students/${profile.id}/applications`);
-      this.applications = applications;
-
-      // Enrich applications with drive details in parallel
-      const driveIds = [...new Set(applications.map((a) => a.drive_id))];
-      const driveMap = {};
-      await Promise.all(
-        driveIds.map(async (id) => {
-          try {
-            driveMap[id] = await api.get(`/drives/${id}`);
-          } catch {
-            driveMap[id] = null;
-          }
-        })
-      );
-      this.applications = applications.map((a) => ({
-        ...a,
-        drive: driveMap[a.drive_id] ?? null,
-      }));
+      this.applications = await api.get(`/students/${profile.id}/applications/details`);
     } catch (err) {
       this.error = err.message || "Failed to load dashboard.";
     } finally {
@@ -388,15 +371,7 @@ export default {
       return app?.status || "applied";
     },
     statusBadgeClass(status) {
-      const map = {
-        applied: "bg-secondary",
-        shortlisted: "bg-info text-dark",
-        selected: "bg-success",
-        rejected: "bg-danger",
-        pending: "bg-warning text-dark",
-        cancelled: "bg-dark",
-      };
-      return map[status?.toLowerCase()] ?? "bg-secondary";
+      return applicationStatusBadgeClass(status);
     },
     truncateText(text, length) {
       if (!text) return '';

@@ -1,7 +1,7 @@
 <template>
   <footer class="footer">
     <div class="footer-inner">
-      <span>© 2025 PlacementPortal. All rights reserved.</span>
+      <span>© 2026 PlacementPortal. All rights reserved.</span>
     </div>
   </footer>
 </template>
@@ -12,6 +12,6 @@
   color: #94a3b8;
   height: 60px;
   display: flex;
-  align-items:a;
+  align-items: center;
 }
 </style>

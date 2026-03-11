@@ -3,6 +3,13 @@ from services.service_errors import ServiceError
 
 
 class CompanyService:
+    ALLOWED_UPDATE_FIELDS = {
+        "company_name",
+        "industry",
+        "location",
+        "website",
+        "hr_contact",
+    }
 
     @staticmethod
     def _set_drive_statuses_for_company(company_id, status):
@@ -42,7 +49,7 @@ class CompanyService:
             raise ServiceError("Company not found")
 
         for key, value in data.items():
-            if key != "id" and hasattr(item, key):
+            if key in CompanyService.ALLOWED_UPDATE_FIELDS and hasattr(item, key):
                 setattr(item, key, value)
 
         db.session.commit()

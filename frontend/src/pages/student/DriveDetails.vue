@@ -184,6 +184,7 @@
 <script>
 import api from "@/utils/api";
 import { useUserStore } from "@/stores/user";
+import { formatDate, lifecycleStatusBadgeClass } from "@/utils/ui";
 
 export default {
   name: "DriveDetails",
@@ -281,18 +282,10 @@ export default {
       }
     },
     formatDate(dateStr) {
-      if (!dateStr) return "—";
-      const d = new Date(dateStr);
-      if (isNaN(d)) return dateStr;
-      return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+      return formatDate(dateStr);
     },
     statusBadgeClass(status) {
-      const map = {
-        approved: "bg-success",
-        pending: "bg-warning text-dark",
-        rejected: "bg-danger",
-      };
-      return map[status?.toLowerCase()] ?? "bg-secondary";
+      return lifecycleStatusBadgeClass(status);
     },
   },
 };

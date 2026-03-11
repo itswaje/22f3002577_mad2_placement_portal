@@ -65,6 +65,13 @@ class ApplicationService:
             eligibility = ApplicationService.check_eligibility(data["student_id"], data["drive_id"])
             if not eligibility["eligible"]:
                 raise ServiceError("Not eligible: " + " | ".join(eligibility["reasons"]))
+
+            existing = Application.query.filter_by(
+                student_id=data["student_id"],
+                drive_id=data["drive_id"]
+            ).first()
+            if existing:
+                raise ServiceError("Already applied for this drive")
         
         if "applied_date" not in data or not data["applied_date"]:
             data["applied_date"] = date.today()

@@ -79,6 +79,7 @@
 
 <script>
 import api from "@/utils/api";
+import { lifecycleStatusBadgeClass } from "@/utils/ui";
 
 export default {
   name: "AdminCompanies",
@@ -114,13 +115,7 @@ export default {
   },
   methods: {
     statusBadgeClass(status) {
-      return {
-        badge: true,
-        "bg-warning text-dark": status === "pending",
-        "bg-success": status === "approved",
-        "bg-danger": status === "rejected",
-        "bg-dark": status === "blacklisted",
-      };
+      return lifecycleStatusBadgeClass(status);
     },
     async approve(company) {
       company._loading = true;

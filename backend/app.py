@@ -78,10 +78,6 @@ def create_app():
     app.register_blueprint(api_bp)
 
     #flask restful
-    #api.init_app(app)
-
-
-
     # create database tables(trial)
     with app.app_context():
         db.create_all()#creates database and tables

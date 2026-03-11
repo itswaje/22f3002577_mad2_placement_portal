@@ -77,7 +77,7 @@ class Application(BaseModel):
     drive_id = db.Column(db.Integer, db.ForeignKey('placement_drive.id'),nullable = False)
     status = db.Column(db.Enum("applied","shortlisted","waiting","selected","rejected"),default="applied")
     applied_date = db.Column(db.Date)
-__table_args__ = (db.UniqueConstraint('student_id', 'drive_id'),)#enforces rule that student cannot apply to the same placement drive more than once
+    __table_args__ = (db.UniqueConstraint('student_id', 'drive_id'),)#enforces rule that student cannot apply to the same placement drive more than once
 
 
 class Placement(BaseModel):

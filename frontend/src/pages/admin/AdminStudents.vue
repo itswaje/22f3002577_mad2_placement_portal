@@ -71,6 +71,7 @@
 
 <script>
 import api from "@/utils/api";
+import { studentActiveBadgeClass } from "@/utils/ui";
 
 export default {
   name: "AdminStudents",
@@ -106,11 +107,7 @@ export default {
   },
   methods: {
     statusBadgeClass(student) {
-      return {
-        badge: true,
-        "bg-success": student.is_active,
-        "bg-dark": !student.is_active,
-      };
+      return studentActiveBadgeClass(student);
     },
     async blacklistStudent(student) {
       if (!confirm(`Blacklist student "${student.name}"?`)) return;

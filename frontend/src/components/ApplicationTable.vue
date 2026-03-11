@@ -66,6 +66,8 @@
 </template>
 
 <script>
+import { applicationStatusBadgeClass, formatDate } from "@/utils/ui";
+
 export default {
   name: "ApplicationTable",
   props: {
@@ -75,15 +77,7 @@ export default {
   emits: ["withdraw"],
   methods: {
     statusBadgeClass(status) {
-      const map = {
-        applied: "bg-secondary",
-        shortlisted: "bg-info text-dark",
-        selected: "bg-success",
-        rejected: "bg-danger",
-        pending: "bg-warning text-dark",
-        cancelled: "bg-dark",
-      };
-      return map[status?.toLowerCase()] ?? "bg-secondary";
+      return applicationStatusBadgeClass(status);
     },
     resolveStatus(app) {
       if (app?.drive?.status === "cancelled") {
@@ -96,10 +90,7 @@ export default {
       return ["applied", "pending"].includes(status?.toLowerCase());
     },
     formatDate(dateStr) {
-      if (!dateStr) return "—";
-      const d = new Date(dateStr);
-      if (isNaN(d)) return dateStr;
-      return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+      return formatDate(dateStr);
     },
   },
 };

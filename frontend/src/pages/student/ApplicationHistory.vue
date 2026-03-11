@@ -182,23 +182,7 @@ export default {
     this.loading = true;
     try {
       const profile = await api.get("/students/me");
-      const apps = await api.get(`/students/${profile.id}/applications`);
-      // Enrich with drive details in parallel
-      const driveIds = [...new Set(apps.map((a) => a.drive_id))];
-      const driveMap = {};
-      await Promise.all(
-        driveIds.map(async (id) => {
-          try {
-            driveMap[id] = await api.get(`/drives/${id}`);
-          } catch {
-            driveMap[id] = null;
-          }
-        })
-      );
-      this.applications = apps.map((a) => ({
-        ...a,
-        drive: driveMap[a.drive_id] ?? null,
-      }));
+      this.applications = await api.get(`/students/${profile.id}/applications/details`);
     } catch (err) {
       this.error = err.message || "Failed to load applications.";
     } finally {

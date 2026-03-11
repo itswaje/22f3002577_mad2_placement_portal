@@ -23,7 +23,7 @@ class RequestService:
 
         try:
             db.session.commit()
-        except:
+        except Exception:
             db.session.rollback()
             raise ServiceError("Request creation failed")
 
