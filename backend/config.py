@@ -15,3 +15,9 @@ class LocalDevelopmentConfig(BaseConfig): #localdevconfig inherits baseconfig an
     SECURITY_PASSWORD_SALT = os.environ.get("SECURITY_PASSWORD_SALT") #random string added when generating password hashes
     SECURITY_PASSWORD_HASH = 'argon2'
     WTF_CSRF_ENABLED = False  # disable CSRF for REST API token auth
+
+    # MailHog Config (local development mail capture)
+    MAILHOG_HOST = os.environ.get("MAILHOG_HOST", "127.0.0.1")
+    MAILHOG_PORT = int(os.environ.get("MAILHOG_PORT", 1025))
+    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "noreply@placement.local")
+    ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@placement.local")

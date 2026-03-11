@@ -17,9 +17,9 @@ with app.app_context():
     datastore.find_or_create_role("company", description="recruiting company")
 
     # create admin user
-    if not datastore.find_user(email="admin@study"):
+    if not datastore.find_user(email="admin@gmail.com"):
         admin = datastore.create_user(
-            email="admin@study",
+            email="admin@gmail.com",
             name="admin_01",
             password=hash_password("pass"))
         datastore.add_role_to_user(admin, "admin")

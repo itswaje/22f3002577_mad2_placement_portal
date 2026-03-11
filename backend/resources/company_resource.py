@@ -6,6 +6,7 @@ from services.service_errors import ServiceError
 from flask_security import current_user
 from flask_security.decorators import roles_required, auth_required
 from .drive_resource import marshal_fields as drive_fields
+from extentions import cache
 
 company_fields = {
     "id": fields.Integer,
@@ -47,7 +48,7 @@ class CompanyResource(Resource):
 
         data = request.get_json()
         item = CompanyService.update(id, data)
-
+        cache.delete("company_list")
         return marshal(item, company_fields), 200
 
     # DELETE /api/companies/<id>
@@ -62,6 +63,7 @@ class CompanyResource(Resource):
             return {"message": "Not authorized"}, 403
 
         CompanyService.delete(id)
+        cache.delete("company_list")
         return {"message": "Company deleted successfully"}, 200
 
 
@@ -69,6 +71,7 @@ class CompanyListResource(Resource):
 
     # GET /api/companies — anyone logged in can view companies
     @auth_required("token")
+    @cache.cached(key_prefix="company_list")
     def get(self):
         items = CompanyService.get_all()
         return marshal(items, company_fields), 200
@@ -81,6 +84,7 @@ class CompanyListResource(Resource):
         data["user_id"] = current_user.id
 
         item = CompanyService.create(data)
+        cache.delete("company_list")
         return marshal(item, company_fields), 201
 
 

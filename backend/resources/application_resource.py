@@ -3,6 +3,7 @@ from services.application_service import ApplicationService
 from flask_security import current_user
 from flask_security.decorators import roles_required, roles_accepted, auth_required
 from flask import request
+from extentions import cache
 
 application_fields = {
     "id": fields.Integer,
@@ -19,6 +20,7 @@ class ApplicationListResource(Resource):
 
     @auth_required("token")
     @roles_accepted("admin", "company")
+    @cache.cached(key_prefix="application_list")
     def get(self):
         items = ApplicationService.get_all()
         return marshal(items, application_fields), 200
@@ -36,6 +38,8 @@ class ApplicationListResource(Resource):
 
         try:
             item = ApplicationService.create(data)
+            cache.delete("application_list")
+            cache.delete_memoized(DriveApplicationsResource.get, DriveApplicationsResource, item.drive_id)
             return marshal(item, application_fields), 201
         except Exception as e:
             error_msg = str(e)
@@ -100,6 +104,8 @@ class ApplicationResource(Resource):
         data["id"] = id
         try:
             item = ApplicationService.update(data)
+            cache.delete("application_list")
+            cache.delete_memoized(DriveApplicationsResource.get, DriveApplicationsResource, item.drive_id)
             return marshal(item, application_fields), 200
         except Exception as e:
             return {"message": str(e)}, 400
@@ -121,6 +127,8 @@ class ApplicationResource(Resource):
             return {"message": "Not authorized"}, 403
 
         ApplicationService.delete(id)
+        cache.delete("application_list")
+        cache.delete_memoized(DriveApplicationsResource.get, DriveApplicationsResource, item.drive_id)
         return {"message": "Application deleted"}, 200
 
 
@@ -129,6 +137,7 @@ class DriveApplicationsResource(Resource):
 
     @auth_required("token")
     @roles_accepted("admin", "company")
+    @cache.memoize()
     def get(self, drive_id):
         items = ApplicationService.get_by_drive(drive_id)
         return marshal(items, application_fields), 200

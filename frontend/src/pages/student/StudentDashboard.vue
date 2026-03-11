@@ -273,6 +273,11 @@
               <router-link to="/student/applications" class="btn btn-outline-secondary btn-sm text-start">
                 <i class="bi bi-list-check me-2"></i>View Application History
               </router-link>
+              <button @click="exportCSV" :disabled="exporting" class="btn btn-outline-success btn-sm text-start">
+                <span v-if="exporting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                <i v-else class="bi bi-download me-2"></i>
+                {{ exporting ? 'Exporting...' : 'Export Applications CSV' }}
+              </button>
             </div>
           </div>
         </div>
@@ -296,6 +301,7 @@ export default {
       allDrives: [],
       selectedCompanyId: null,
       loading: false,
+      exporting: false,
       error: null,
     };
   },
@@ -383,6 +389,17 @@ export default {
         return (salary / 100000).toFixed(1) + 'L';
       }
       return salary.toLocaleString('en-IN');
+    },
+    async exportCSV() {
+      this.exporting = true;
+      try {
+        const res = await api.post('/students/me/export-csv');
+        alert(res.message || 'Export started! You will receive an email with the CSV shortly.');
+      } catch (err) {
+        alert('Export failed: ' + (err.message || 'Unknown error'));
+      } finally {
+        this.exporting = false;
+      }
     }
   },
 };

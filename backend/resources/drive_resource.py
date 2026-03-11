@@ -4,7 +4,7 @@ from flask_restful import Resource,marshal,fields,reqparse
 from services import DriveService,RequestService
 from flask_security import current_user
 from flask_security.decorators import roles_required, roles_accepted, auth_required
-from extensions import cache #generally for large get requests cache is implemented 
+from extentions import cache #generally for large get requests cache is implemented 
 
 
 def _get_company_for_user():
@@ -47,7 +47,7 @@ class DriveResource(Resource):
 
     # anyone logged in can view drives
     @auth_required("token")
-    @cache.memoize()
+    @cache.memoize()#when parameters involved used cache.memoise when no params use cache.cache
     def get(self, id):
 
         item = DriveService.get_by_id(id)
@@ -80,9 +80,14 @@ class DriveResource(Resource):
                 "status": "pending",
                 "user_id": current_user.id
             })
+            cache.delete("admin_requests")
             return {"message": "Update request sent to admin"}, 200
 
         item = DriveService.update(args)
+        # clear cached GET for this drive and the list caches
+        cache.delete_memoized(DriveResource.get, DriveResource, id)
+        cache.delete("drive_list_student")
+        cache.delete("drive_list_all")
         return marshal(item, marshal_fields), 200
 
 
@@ -112,9 +117,14 @@ class DriveResource(Resource):
                 "status": "pending",
                 "user_id": current_user.id
             })
+            cache.delete("admin_requests")
             return {"message": "Update request sent to admin"}, 200
 
         item = DriveService.update(data)
+        # clear cached GET for this drive and the list caches
+        cache.delete_memoized(DriveResource.get, DriveResource, id)
+        cache.delete("drive_list_student")
+        cache.delete("drive_list_all")
         return marshal(item, marshal_fields), 200
 
 
@@ -137,9 +147,14 @@ class DriveResource(Resource):
                 "status": "pending",
                 "user_id": current_user.id
             })
+            cache.delete("admin_requests")
             return {"message": "Delete request sent to admin"}, 200
 
         DriveService.delete(id)
+        # clear cached GET for this drive and the list caches
+        cache.delete_memoized(DriveResource.get, DriveResource, id)
+        cache.delete("drive_list_student")
+        cache.delete("drive_list_all")
         return {"message": "Drive deleted successfully"}, 200
 
 
@@ -148,9 +163,9 @@ class DriveResource(Resource):
 #/api/drives get,post like its for creating and listing the existing things
 class DriveListResource(Resource):
 
-
-    # students can view drives
+    # auth runs first, then cache is checked (prevents bypassing auth on cache hit)
     @auth_required("token")
+    @cache.cached(key_prefix=lambda: "drive_list_student" if current_user.has_role("student") else "drive_list_all")
     def get(self):
         all_drives = DriveService.get_all()
 
@@ -184,7 +199,10 @@ class DriveListResource(Resource):
             "status": "pending",
             "user_id": current_user.id
         })
-
+        cache.delete("admin_requests")
+        # clear cached list for all roles
+        cache.delete("drive_list_student")
+        cache.delete("drive_list_all")
         return {"message": "Drive creation request sent to admin"}, 200
 
 

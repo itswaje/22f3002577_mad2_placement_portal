@@ -111,7 +111,7 @@ def register():
     if role == "company":
         company = Company(
             user_id=user.id,
-            company_name=name,
+            company_name=company_name or name,
             industry=industry,
             location=location,
             website=website,
@@ -134,6 +134,16 @@ def register():
     except Exception:
         db.session.rollback()
         return {"message":"error assigning role"},400
+
+    # Invalidate cached lists so admin sees new registrations immediately
+    from extentions import cache
+    if role == "company":
+        cache.delete("company_list")
+        cache.delete("admin_dashboard")
+    elif role == "student":
+        cache.delete("student_list")
+        cache.delete("admin_dashboard")
+
     return jsonify({"id":user.id,
             "email":user.email,
             "name":user.name,

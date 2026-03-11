@@ -1,9 +1,15 @@
-from flask import Flask
+from flask import Flask, request
 from config import LocalDevelopmentConfig
 from resources import auth_bp ,api,api_bp# for blueprint (if i didnt create init.py then i would have imported it as resources.auth_resource)
 from flask_cors import CORS
 import uuid
-
+from flask_caching import Cache
+from celery import Celery
+from celery.schedules import crontab
+from extentions import cache
+from celery_factory import celery_init_app
+from celery.schedules  import crontab
+from mail import send_email
 
 def ensure_default_data(app, db, datastore, User):
     from flask_security import hash_password
@@ -15,21 +21,21 @@ def ensure_default_data(app, db, datastore, User):
 
     defaults = [
         {
-            "email": "admin@study",
+            "email": "admin@gmail.com",
             "name": "admin_01",
             "password": "pass",
             "role": "admin",
             "active": True,
         },
         {
-            "email": "company@study",
+            "email": "company@gmail.com",
             "name": "company_01",
             "password": "passs",
             "role": "company",
             "active": True,
         },
         {
-            "email": "student@study",
+            "email": "student@gmail.com",
             "name": "student_01",
             "password": "passss",
             "role": "student",
@@ -67,7 +73,7 @@ def create_app():
     CORS(app, origins=["http://localhost:5173", "http://127.0.0.1:5173"] )
     #flask security things
     from flask_security import SQLAlchemyUserDatastore
-    from extentions import security ,Cache
+    from extentions import security ,cache
     datastore = SQLAlchemyUserDatastore(db,User,Role)
     security.init_app(app,datastore=datastore,)
     app.datastore = datastore 
@@ -79,21 +85,87 @@ def create_app():
 
     # cache
     cache.init_app(app)
+    
 
+      # celery config
+    app.config.from_mapping(
+    CELERY=dict(
+        broker_url="redis://localhost:6379/0", #this is the redis-server running port
+        result_backend="redis://localhost:6379/1",
+        timezone = 'Asia/Kolkata',
+        include=["tasks.mail_tasks", "tasks.export_tasks"],
+    ),
+    )
+    celery_app = celery_init_app(app)
     #flask restful
-    # create database tables(trial)
+    # create database tables
     with app.app_context():
         db.create_all()#creates database and tables
         ensure_default_data(app, db, datastore, User)
 
-    return app
+    return app,celery_app
 
-from datetime import datetime 
-app = create_app()
 
-@app.route("/cache")
-def cache():
-    return datetime.uctnow()
+app, celery_app = create_app()
+
+
+@app.route("/mailhog-test", methods=["GET"])
+def mailhog_test():
+    to_email = request.args.get("to", app.config.get("ADMIN_EMAIL", "admin@placement.local"))
+    subject = "Placement Portal MailHog Test"
+    body = "<p>MailHog test successful from Placement Portal backend.</p>"
+
+    try:
+        send_email(to_email, subject, body)
+        return {"message": f"Test email sent to {to_email}"}, 200
+    except Exception as e:
+        app.logger.error(f"MailHog test failed: {e}")
+        return {"message": "MailHog test failed", "error": str(e)}, 500
+
+
+# ---- Instant trigger routes (for testing backend jobs without waiting for crontab) ----
+
+@app.route("/trigger/daily-reminders", methods=["GET"])
+def trigger_daily_reminders():
+    """Trigger the daily reminder job immediately."""
+    from tasks.mail_tasks import send_daily_reminders
+    task = send_daily_reminders.delay()
+    return {"message": "Daily reminders task queued", "task_id": task.id}, 200
+
+
+@app.route("/trigger/monthly-report", methods=["GET"])
+def trigger_monthly_report():
+    """Trigger the monthly activity report job immediately."""
+    from tasks.mail_tasks import send_monthly_report
+    task = send_monthly_report.delay()
+    return {"message": "Monthly report task queued", "task_id": task.id}, 200
+
+
+@app.route("/trigger/export-csv/<int:student_id>", methods=["GET"])
+def trigger_export_csv(student_id):
+    """Trigger CSV export for a student immediately."""
+    from tasks.export_tasks import export_applications_csv
+    task = export_applications_csv.delay(student_id)
+    return {"message": f"CSV export task queued for student {student_id}", "task_id": task.id}, 200
+
+
+from tasks.mail_tasks import send_daily_reminders, send_monthly_report
+
+@celery_app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    # a. Daily reminders –  at 8:0 AM IST (change back to hour=8, minute=0)
+    sender.add_periodic_task(
+        crontab(hour=8, minute=8),
+        send_daily_reminders.s(),
+        name="daily-deadline-reminders",
+    )
+
+    # b. Monthly activity report – runs on the 1st of every month at 7:00 AM IST
+    sender.add_periodic_task(
+        crontab(hour=18, minute=12, day_of_month=11),
+        send_monthly_report.s(),
+        name="monthly-activity-report",
+    )
 
 
 if (__name__=="__main__"):

@@ -5,10 +5,11 @@ from resources.auth_resource import auth_bp
 # import all resources
 from .drive_resource import DriveResource,DriveListResource
 from .company_resource import CompanyDrivesResource
-from .student_resource import StudentResource, StudentListResource, StudentMeResource
+from .student_resource import StudentResource, StudentListResource, StudentMeResource, StudentExportCSVResource
 from .company_resource import CompanyResource, CompanyListResource
 from .application_resource import ApplicationResource, ApplicationListResource, DriveApplicationsResource, StudentApplicationsResource, EligibilityResource, DriveApplicationsDetailedResource, StudentApplicationsDetailedResource
 from .admin_resource import AdminDashboardResource,CompanyApproveResource,CompanyRejectResource,CompanyBlacklistResource,StudentBlacklistResource,DriveApproveResource,DriveRejectResource,AdminRequestsResource
+
 # main api blueprint
 api_bp= Blueprint("api",__name__,url_prefix="/api")
 # attach flask-restful
@@ -21,6 +22,7 @@ api.add_resource(DriveResource,"/drives/<int:id>")
 # STUDENT APIs
 api.add_resource(StudentListResource, "/students")
 api.add_resource(StudentMeResource, "/students/me")
+api.add_resource(StudentExportCSVResource, "/students/me/export-csv")
 api.add_resource(StudentResource, "/students/<int:id>")
 # COMPANY APIs
 api.add_resource(CompanyListResource, "/companies")
