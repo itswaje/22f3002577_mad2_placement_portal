@@ -65,10 +65,10 @@ export default {
 
   methods: {
 
-    handleLogout() {
+    async handleLogout() {
       this.dropdownOpen = false;
       if (this.userStore) {
-        this.userStore.logout();
+        await this.userStore.logout();
       }
       this.$router.push("/login");
     }

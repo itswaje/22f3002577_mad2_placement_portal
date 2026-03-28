@@ -1,6 +1,6 @@
 import uuid
 from flask import Blueprint,jsonify,request
-from flask_security import verify_password,hash_password
+from flask_security import verify_password,hash_password,auth_required,current_user
 
 from model import User,Company,Student,db
 
@@ -148,4 +148,12 @@ def register():
             "email":user.email,
             "name":user.name,
             }),201 
+
+@auth_bp.route("/logout", methods=["POST"])
+@auth_required("token")
+def logout():
+    # Regenerate fs_uniquifier so the current token is immediately invalidated
+    current_user.fs_uniquifier = str(uuid.uuid4())
+    db.session.commit()
+    return jsonify({"message": "Logged out successfully"}), 200
     

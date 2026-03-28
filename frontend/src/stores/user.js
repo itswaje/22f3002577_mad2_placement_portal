@@ -48,8 +48,13 @@ export const useUserStore = defineStore("user", {
         localStorage.removeItem("user")
       }
     },
-//kind of blacklisting by forgetting the toke
-    logout(){
+//kind of blacklisting by forgetting the token - also invalidates on server
+    async logout(){
+      try {
+        await api.post("/auth/logout", {})
+      } catch (e) {
+        // ignore errors (e.g. already expired) - still clear local state
+      }
       this.setToken(null)
       this.setUser(null)
     },
